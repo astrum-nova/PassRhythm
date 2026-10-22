@@ -15,5 +15,5 @@ This project aims at creating a password manager that uses rhythm patterns as th
 
 # Accessing your passwords from the PassRhythm client
 1: Click `Unlock vault`<br>
-2: Perform your rhythm<br>
+2: Perform your passrhythm<br>
 3: You're in!<br>
