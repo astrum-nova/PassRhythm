@@ -20,7 +20,7 @@ This project aims at creating a password manager that uses rhythm patterns as th
 
 # How does it work?
 ### Creating the passrhythm
-We compile a master password for the KBDX4 database using the data we can read from the chart file.
+We compile a master password for the KDBX4 database using the data we can read from the chart file.
 The data looks like this "6:L1,L2|24:L4|65:L3,L4", the first number is the progress of the chart, it depends on both time signature and bpm.
 The second piece of information is the lane that note is on, if there are multiple they are sorted.
 ### Performing the passrhythm
