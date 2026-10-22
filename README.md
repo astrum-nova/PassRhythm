@@ -14,6 +14,6 @@ This project aims at creating a password manager that uses rhythm patterns as th
 - ⚠ To make sure the system is secure, confirming at this stage will permanently delete your chart file, if you want to keep it back it up, or draw the chart on a piece of paper
 
 # Accessing your passwords from the PassRhythm client
-1: Click `Unlock vault`
-2: Perform your rhythm
-3: You're in!
+1: Click `Unlock vault`<br>
+2: Perform your rhythm<br>
+3: You're in!<br>
