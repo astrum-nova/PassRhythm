@@ -4,3 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+keepass = { version = "0.17.0", features = ["save_kdbx4"] }
+serde = { version = "1.0.229", features = ["derive"] }
+rodio = "0.23.0"
+rdev = { version = "0.5.3", features = ["serialize"] }
+zeroize = "1.9.1"
