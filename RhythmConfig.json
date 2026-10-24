@@ -1,8 +1,32 @@
 {
-  "first_input": -26,
-  "bpm": 150,
-  "time_signature": {
-    "numerator": -1,
-    "denominator": -1
-  }
+  "first_input": -26.0,
+  "timing_points": [
+    {
+      "start_time": 0.0,
+      "bpm": 0.0,
+      "time_signature": 0.0
+    },
+    {
+      "start_time": -26.0,
+      "bpm": 150.0,
+      "time_signature": 0.0
+    }
+  ]
+}   },
+    {
+      "start_time": 1687.0521,
+      "bpm": 185.0,
+      "time_signature": 7.0
+    },
+    {
+      "start_time": 1687.0521,
+      "bpm": 185.0,
+      "time_signature": 11.0
+    },
+    {
+      "start_time": 1687.0521,
+      "bpm": 185.0,
+      "time_signature": 0.0
+    }
+  ]
 }

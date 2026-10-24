@@ -1,55 +1,73 @@
+use crate::config_services::{RhythmConfig, TimingPoint, write_rhythm_config};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use crate::config_services::{write_rhythm_config, RhythmConfig, TimeSignature};
 
 #[derive(Debug)]
 /// Holds note lane, start time, and end time for a note
 struct Note {
     //.0: note on lane, .1: release on lane
-    lanes: Vec<(i32, Option<i32>)>,
-    start_time: i32,
+    lanes: Vec<(i32, Option<f32>)>,
+    start_time: f32,
 }
 
 /// Extracts necessary data from a chart file, and writes to rhythm config.
 /// > Side effect: writes to RhythmConfig.json
 fn parse_chart_file(chart_file: File) -> Vec<Note> {
     let mut rhythm_config = RhythmConfig {
-        first_input: -1,
-        bpm: -1,
-        time_signature: TimeSignature {
-            numerator: -1,
-            denominator: -1
-        },
+        first_input: None,
+        timing_points: vec![TimingPoint {
+            start_time: 0f32,
+            bpm: 0f32,
+            time_signature: 0f32,
+        }]
     };
-    let mut last_start_time = -1;
+    let mut hit_objects = false;
     let mut notes: Vec<Note> = vec![];
     for line_result in BufReader::new(chart_file).lines() {
         if let Ok(line) = line_result {
             let line_data: Vec<&str> = line.split(":").collect();
             match line_data[0].replace("-", "").replace(" ", "").as_str() {
-                "AudioFile" => todo!("BRING AUDIO FILE HERE"),
+                "AudioFile" => /*TODO*/(),
                 "StartTime" => {
                     let value = parse_value(line_data[1]);
-                    last_start_time = value;
-                    if rhythm_config.bpm == -1 {
-                        rhythm_config.first_input = value;
+                    if !hit_objects {
+                        rhythm_config.first_input = Some(value);
+                        rhythm_config.timing_points.push(TimingPoint {
+                            start_time: value,
+                            bpm: 0f32,
+                            time_signature: 0f32,
+                        });
                         continue;
                     }
                     if let Some(note) = notes.last_mut() && note.start_time != value {
                         notes.push(Note {
                             lanes: vec![],
                             start_time: value,
-                        })
+                        });
                     }
                 },
-                "Lane" => if let Some(note) = notes.last_mut() && note.start_time == last_start_time {
-                    note.lanes.push((parse_value(line_data[1]), None))
+                "HitObjects" => hit_objects = true,
+                "Lane" => if let Some(note) = notes.last_mut() {
+                    note.lanes.push((parse_value(line_data[1]) as i32, None))
                 },
                 "EndTime" => if let Some(note) = notes.last_mut() && let Some(lane) = note.lanes.last_mut() {
                     lane.1 = Some(parse_value(line_data[1]));
                 },
-                "Bpm" => rhythm_config.bpm = parse_value(line_data[1]),
-                _ignored => println!("Line {_ignored} is ignored")
+                "Bpm" => {
+                    if let Some(timing_point) = rhythm_config.timing_points.last_mut() {
+                        timing_point.bpm = parse_value(line_data[1]);
+                    }
+                    if notes.is_empty() {
+                        notes.push(Note {
+                            lanes: vec![],
+                            start_time: rhythm_config.timing_points[0].start_time,
+                        });
+                    }
+                },
+                "Signature" => if let Some(timing_point) = rhythm_config.timing_points.last_mut() {
+                    timing_point.time_signature = parse_value(line_data[1]);
+                },
+                _ => (),
             }
         }
     }
@@ -61,19 +79,24 @@ fn parse_chart_file(chart_file: File) -> Vec<Note> {
 }
 
 /// Parses the numeric value of the chart data
-fn parse_value(value: &str) -> i32 {
-    match value.trim().parse::<i32>() {
+fn parse_value(value: &str) -> f32 {
+    match value.trim().parse::<f32>() {
         Ok(num) => num,
         Err(err) => panic!("Failed parsing value in chart file for line: {value}\n{err}")
     }
 }
 
 /// Assembles the notes collected from the chart data into the master key format
-fn assemble_master_key(notes: Vec<Note>) -> String {
-    for mut note in notes {
-        note.lanes.sort();
+fn assemble_master_key(mut notes: Vec<Note>) -> String {
+    if notes[0].lanes.is_empty() {
+        notes.remove(0);
     }
-    todo!()
+    for note in &mut notes {
+        note.lanes.sort_by(|lane_a, lane_b| lane_a.0.cmp(&lane_b.0));
+    }
+    println!("{notes:#?}");
+    //TODO
+    String::new()
 }
 
 /// Glues together the functions of the chart parsing module

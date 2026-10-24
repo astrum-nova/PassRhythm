@@ -4,20 +4,20 @@ use std::fs::File;
 use std::io::BufWriter;
 use pass_rhythm::open_file;
 
-/// Simple struct to have labeled entries in the serialized JSON, instead of a tuple or fixed size array of 2 elements
+/// Holds information for a timing change in the song
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TimeSignature {
-    pub(crate) numerator: i32,
-    pub(crate) denominator: i32
+pub struct TimingPoint {
+    pub start_time: f32,
+    pub bpm: f32,
+    pub time_signature: f32
 }
 
 /// Struct containing the current passrhythm information
 /// first_input is the time of the song where the first input happens, needed for offset settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RhythmConfig {
-    pub first_input: i32,
-    pub bpm: i32,
-    pub time_signature: TimeSignature
+    pub first_input: Option<f32>,
+    pub timing_points: Vec<TimingPoint>
 }
 
 /// Reads RhythmConfig.json and returns a RhythmConfig struct
