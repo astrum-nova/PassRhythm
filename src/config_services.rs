@@ -1,11 +1,14 @@
 use rdev::Key;
 use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::BufWriter;
+use pass_rhythm::open_file;
 
 /// Simple struct to have labeled entries in the serialized JSON, instead of a tuple or fixed size array of 2 elements
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeSignature {
-    numerator: i32,
-    denominator: i32
+    pub(crate) numerator: i32,
+    pub(crate) denominator: i32
 }
 
 /// Struct containing the current passrhythm information
@@ -18,49 +21,54 @@ pub struct RhythmConfig {
 }
 
 /// Reads RhythmConfig.json and returns a RhythmConfig struct
-pub fn read_rhythm_config() -> Result<RhythmConfig, String> {
-    Ok(RhythmConfig {
-        first_input: 0,
-        bpm: 0,
-        time_signature: TimeSignature {
-            numerator: 4,
-            denominator: 4
-        }
-    })
+pub fn read_rhythm_config() -> RhythmConfig {
+    if let Ok(user_config) = serde_json::from_reader::<File, RhythmConfig>(open_file("RhythmConfig.json")) {
+        user_config
+    } else {
+        //TODO: Add backups or a way to attempt recovery if possible
+        panic!("Couldn't read your passrhythm configuration");
+    }
 }
 
-/// Updates RhythmConfig.json from a RhythmConfig struct
-pub fn write_rhythm_config(rhythm_config: &RhythmConfig) {
-    todo!()
+/// Updates RhythmConfig.json from a RhythmConfig struct, only confirm chart file deletion if result is Ok
+pub fn write_rhythm_config(config: RhythmConfig) -> serde_json::Result<()> {
+    serde_json::to_writer_pretty(BufWriter::new(open_file("RhythmConfig.json")), &config)
 }
 
 /// Struct containing user configs, filled by reading from UserConfig.json, and used to write to UserConfig.json
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserConfig {
     pub offset: i32,
-    pub keybinds: [Option<Key>; 10]
+    pub keybinds: [Key; 10]
 }
 
 /// Reads UserConfig.json and returns a UserConfig struct
-pub fn read_user_config() -> Result<UserConfig, String> {
-    Ok(UserConfig {
-        offset: 0,
-        keybinds: [
-            Some(Key::KeyC),
-            Some(Key::KeyV),
-            Some(Key::Kp1),
-            Some(Key::Kp2),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None
-        ]
-    })
+pub fn read_user_config() -> UserConfig {
+    if let Ok(user_config) = serde_json::from_reader::<File, UserConfig>(open_file("UserConfig.json")) {
+        user_config
+    } else {
+        println!("Failed to deserialize user config, default settings will be used");
+        UserConfig {
+            offset: 0,
+            keybinds: [
+                Key::Num1,
+                Key::Num2,
+                Key::Num3,
+                Key::Num4,
+                Key::Num5,
+                Key::Num6,
+                Key::Num7,
+                Key::Num8,
+                Key::Num9,
+                Key::Num0
+            ],
+        }
+    }
 }
 
 /// Updates UserConfig.json from a UserConfig struct
-pub fn write_user_config(user_config: &UserConfig) {
-    todo!()
+pub fn write_user_config(config: UserConfig) {
+    if let Err(_) = serde_json::to_writer_pretty(BufWriter::new(open_file("UserConfig.json")), &config) {
+        println!("Could not save user config, will live in memory for now");
+    }
 }
