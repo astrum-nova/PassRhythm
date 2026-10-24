@@ -18,10 +18,11 @@ fn parse_chart_file(chart_file: File) -> Vec<Note> {
         timing_points: vec![TimingPoint {
             start_time: 0f32,
             bpm: 0f32,
-            time_signature: 0f32,
+            time_signature: Some(4f32),
         }]
     };
     let mut hit_objects = false;
+    let mut slider_velocities = false;
     let mut notes: Vec<Note> = vec![];
     for line_result in BufReader::new(chart_file).lines() {
         if let Ok(line) = line_result {
@@ -30,12 +31,12 @@ fn parse_chart_file(chart_file: File) -> Vec<Note> {
                 "AudioFile" => /*TODO*/(),
                 "StartTime" => {
                     let value = parse_value(line_data[1]);
-                    if !hit_objects {
+                    if !hit_objects && !slider_velocities {
                         rhythm_config.first_input = Some(value);
                         rhythm_config.timing_points.push(TimingPoint {
                             start_time: value,
                             bpm: 0f32,
-                            time_signature: 0f32,
+                            time_signature: Some(4f32),
                         });
                         continue;
                     }
@@ -46,6 +47,7 @@ fn parse_chart_file(chart_file: File) -> Vec<Note> {
                         });
                     }
                 },
+                "SliderVelocities" => slider_velocities = true,
                 "HitObjects" => hit_objects = true,
                 "Lane" => if let Some(note) = notes.last_mut() {
                     note.lanes.push((parse_value(line_data[1]) as i32, None))
@@ -65,7 +67,7 @@ fn parse_chart_file(chart_file: File) -> Vec<Note> {
                     }
                 },
                 "Signature" => if let Some(timing_point) = rhythm_config.timing_points.last_mut() {
-                    timing_point.time_signature = parse_value(line_data[1]);
+                    timing_point.time_signature = Some(parse_value(line_data[1]));
                 },
                 _ => (),
             }

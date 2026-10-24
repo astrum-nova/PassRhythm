@@ -9,7 +9,7 @@ use pass_rhythm::open_file;
 pub struct TimingPoint {
     pub start_time: f32,
     pub bpm: f32,
-    pub time_signature: f32
+    pub time_signature: Option<f32>
 }
 
 /// Struct containing the current passrhythm information
