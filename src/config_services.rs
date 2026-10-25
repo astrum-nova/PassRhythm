@@ -22,7 +22,7 @@ pub struct RhythmConfig {
 
 /// Reads RhythmConfig.json and returns a RhythmConfig struct
 pub fn read_rhythm_config() -> RhythmConfig {
-    if let Ok(user_config) = serde_json::from_reader::<File, RhythmConfig>(open_file("RhythmConfig.json")) {
+    if let Ok(user_config) = serde_json::from_reader::<File, RhythmConfig>(open_file("RhythmConfig.json", false)) {
         user_config
     } else {
         //TODO: Add backups or a way to attempt recovery if possible
@@ -31,8 +31,10 @@ pub fn read_rhythm_config() -> RhythmConfig {
 }
 
 /// Updates RhythmConfig.json from a RhythmConfig struct, only confirm chart file deletion if result is Ok
-pub fn write_rhythm_config(config: RhythmConfig) -> serde_json::Result<()> {
-    serde_json::to_writer_pretty(BufWriter::new(open_file("RhythmConfig.json")), &config)
+pub fn write_rhythm_config(config: &RhythmConfig) {
+    if let Err(_) = serde_json::to_writer_pretty(BufWriter::new(open_file("RhythmConfig.json", true)), &config) {
+        panic!("Failed to write RhythmConfig to file, try manually updating the file, refreshing the vault backup")
+    }
 }
 
 /// Struct containing user configs, filled by reading from UserConfig.json, and used to write to UserConfig.json
@@ -44,10 +46,10 @@ pub struct UserConfig {
 
 /// Reads UserConfig.json and returns a UserConfig struct
 pub fn read_user_config() -> UserConfig {
-    if let Ok(user_config) = serde_json::from_reader::<File, UserConfig>(open_file("UserConfig.json")) {
+    if let Ok(user_config) = serde_json::from_reader::<File, UserConfig>(open_file("UserConfig.json", false)) {
         user_config
     } else {
-        println!("Failed to deserialize user config, default settings will be used");
+        println!("Failed to deserialize user config!\nDefault settings will be used: offset = 0, keybinds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]\nMake sure you bind all 10 lanes!");
         UserConfig {
             offset: 0,
             keybinds: [
@@ -68,7 +70,7 @@ pub fn read_user_config() -> UserConfig {
 
 /// Updates UserConfig.json from a UserConfig struct
 pub fn write_user_config(config: UserConfig) {
-    if let Err(_) = serde_json::to_writer_pretty(BufWriter::new(open_file("UserConfig.json")), &config) {
+    if let Err(_) = serde_json::to_writer_pretty(BufWriter::new(open_file("UserConfig.json", true)), &config) {
         println!("Could not save user config, will live in memory for now");
     }
 }

@@ -1,18 +1,25 @@
 use crate::config_services::{RhythmConfig, TimingPoint, write_rhythm_config};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use zeroize::Zeroize;
+
+#[derive(Debug, Zeroize)]
+/// Holds note lane, start time, and end time for a note
+pub struct Note {
+    pub lanes: Vec<i32>,
+    pub start_time: f32,
+}
 
 #[derive(Debug)]
-/// Holds note lane, start time, and end time for a note
-struct Note {
-    //.0: note on lane, .1: release on lane
-    lanes: Vec<(i32, Option<f32>)>,
-    start_time: f32,
+pub struct ParsedPayload {
+    pub notes: Vec<Note>,
+    pub rhythm_config: RhythmConfig,
+    pub key: String
 }
 
 /// Extracts necessary data from a chart file, and writes to rhythm config.
 /// > Side effect: writes to RhythmConfig.json
-fn parse_chart_file(chart_file: File) -> Vec<Note> {
+fn parse_chart_file(chart_file: File) -> ParsedPayload {
     let mut rhythm_config = RhythmConfig {
         first_input: None,
         timing_points: vec![TimingPoint {
@@ -50,10 +57,7 @@ fn parse_chart_file(chart_file: File) -> Vec<Note> {
                 "SliderVelocities" => slider_velocities = true,
                 "HitObjects" => hit_objects = true,
                 "Lane" => if let Some(note) = notes.last_mut() {
-                    note.lanes.push((parse_value(line_data[1]) as i32, None))
-                },
-                "EndTime" => if let Some(note) = notes.last_mut() && let Some(lane) = note.lanes.last_mut() {
-                    lane.1 = Some(parse_value(line_data[1]));
+                    note.lanes.push(parse_value(line_data[1]) as i32)
                 },
                 "Bpm" => {
                     if let Some(timing_point) = rhythm_config.timing_points.last_mut() {
@@ -74,10 +78,12 @@ fn parse_chart_file(chart_file: File) -> Vec<Note> {
         }
     }
     //TODO: HANDLE ERROR
-    if let Err(err) = write_rhythm_config(rhythm_config) {
-        panic!("{err}")
+    write_rhythm_config(&rhythm_config);
+    ParsedPayload {
+        notes,
+        rhythm_config,
+        key: String::new()
     }
-    notes
 }
 
 /// Parses the numeric value of the chart data
@@ -89,19 +95,27 @@ fn parse_value(value: &str) -> f32 {
 }
 
 /// Assembles the notes collected from the chart data into the master key format
-fn assemble_master_key(mut notes: Vec<Note>) -> String {
+pub fn assemble_master_key(chart_file: File) -> ParsedPayload {
+    let mut payload = parse_chart_file(chart_file);
+    let notes = &mut payload.notes;
+    // Remove possible stub
     if notes[0].lanes.is_empty() {
         notes.remove(0);
     }
-    for note in &mut notes {
-        note.lanes.sort_by(|lane_a, lane_b| lane_a.0.cmp(&lane_b.0));
+    let mut key: String = String::new();
+    for note in notes {
+        key += note.start_time.to_string().as_str();
+        key += ":";
+        note.lanes.sort();
+        for lane in &note.lanes {
+            key += lane.to_string().as_str();
+            key += ",";
+        }
+        key.remove(key.len() - 1);
+        key += "|";
     }
-    println!("{notes:#?}");
-    //TODO
-    String::new()
-}
-
-/// Glues together the functions of the chart parsing module
-pub fn get_master_key_from_chart(chart_file: File) -> String {
-    assemble_master_key(parse_chart_file(chart_file))
+    key.remove(key.len() - 1);
+    Zeroize::zeroize(&mut payload.notes);
+    payload.key = key;
+    payload
 }
