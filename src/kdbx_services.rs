@@ -1,7 +1,6 @@
+use crate::chart_parsing::ParsedPayload;
 use crate::config_services::write_rhythm_config;
-use crate::rhythm::chart_parsing::ParsedPayload;
 use keepass::{Database, DatabaseKey};
-use pass_rhythm::open_file;
 use std::{fs, fs::File, path::Path};
 
 const PATH_TO_VAULT: &str = "vault.kdbx";

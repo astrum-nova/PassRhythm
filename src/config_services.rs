@@ -2,7 +2,7 @@ use rdev::Key;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::BufWriter;
-use pass_rhythm::open_file;
+use crate::open_file;
 
 /// Holds information for a timing change in the song
 #[derive(Debug, Clone, Serialize, Deserialize)]

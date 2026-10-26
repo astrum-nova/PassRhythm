@@ -1,13 +1,9 @@
-use pass_rhythm::open_file;
-use crate::kdbx_services::update_master_key;
-use crate::rhythm::chart_parsing::{assemble_master_key};
-
-mod config_services;
-mod rhythm;
-mod kdbx_services;
+use pass_rhythm::config_services::read_rhythm_config;
+use pass_rhythm::snap_ms_to_beat;
 
 fn main() {
-    let chart_file = open_file("chart.qua", false);
-    let parsed_payload = assemble_master_key(chart_file);
-    let _ = update_master_key(&parsed_payload, String::new());
+    //let chart_file = open_file("chart.qua", false);
+    //let parsed_payload = assemble_master_key(chart_file);
+    //let _ = update_master_key(&parsed_payload, String::new());
+    println!("{:#?}", snap_ms_to_beat(read_rhythm_config(), 0965.0))
 }

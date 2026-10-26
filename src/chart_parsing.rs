@@ -82,7 +82,7 @@ fn parse_chart_file(chart_file: File) -> ParsedPayload {
     ParsedPayload {
         notes,
         rhythm_config,
-        key: String::new()
+        key: String::new()  
     }
 }
 

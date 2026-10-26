@@ -3,6 +3,9 @@ name = "pass_rhythm"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "pass_rhythm"
+
 [dependencies]
 keepass = { version = "0.17.0", features = ["save_kdbx4"] }
 serde = { version = "1.0.229", features = ["derive"] }
