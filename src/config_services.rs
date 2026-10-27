@@ -16,6 +16,7 @@ pub struct TimingPoint {
 /// first_input is the time of the song where the first input happens, needed for offset settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RhythmConfig {
+    pub audio_file_name: Option<String>,
     pub first_input: Option<f32>,
     pub timing_points: Vec<TimingPoint>
 }

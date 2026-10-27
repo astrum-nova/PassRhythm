@@ -1,16 +1,16 @@
 {
-  "first_input": 0,
+  "audio_file_name": "audio.mp3",
+  "first_input": 135.0,
   "timing_points": [
     {
       "start_time": 0.0,
-      "bpm": 60,
-      "time_signature": 4
+      "bpm": 0.0,
+      "time_signature": 4.0
     },
     {
-      "start_time": 1000.0,
-      "bpm": 120,
-      "time_signature": 3
+      "start_time": 135.0,
+      "bpm": 166.5,
+      "time_signature": 4.0
     }
-
   ]
 }

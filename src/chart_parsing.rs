@@ -1,7 +1,9 @@
+use std::fs;
 use crate::config_services::{RhythmConfig, TimingPoint, write_rhythm_config};
-use std::fs::File;
+use std::fs::{File, ReadDir};
 use std::io::{BufRead, BufReader};
 use zeroize::Zeroize;
+use crate::{open_file, snap_ms_to_beat};
 
 #[derive(Debug, Zeroize)]
 /// Holds note lane, start time, and end time for a note
@@ -14,13 +16,14 @@ pub struct Note {
 pub struct ParsedPayload {
     pub notes: Vec<Note>,
     pub rhythm_config: RhythmConfig,
-    pub key: String
+    pub master_key: String
 }
 
 /// Extracts necessary data from a chart file, and writes to rhythm config.
 /// > Side effect: writes to RhythmConfig.json
 fn parse_chart_file(chart_file: File) -> ParsedPayload {
     let mut rhythm_config = RhythmConfig {
+        audio_file_name: None,
         first_input: None,
         timing_points: vec![TimingPoint {
             start_time: 0f32,
@@ -35,7 +38,7 @@ fn parse_chart_file(chart_file: File) -> ParsedPayload {
         if let Ok(line) = line_result {
             let line_data: Vec<&str> = line.split(":").collect();
             match line_data[0].replace("-", "").replace(" ", "").as_str() {
-                "AudioFile" => /*TODO*/(),
+                "AudioFile" => rhythm_config.audio_file_name = Some(line_data[1].replace(" ", "")),
                 "StartTime" => {
                     let value = parse_value(line_data[1]);
                     if !hit_objects && !slider_velocities {
@@ -82,7 +85,7 @@ fn parse_chart_file(chart_file: File) -> ParsedPayload {
     ParsedPayload {
         notes,
         rhythm_config,
-        key: String::new()  
+        master_key: String::new()
     }
 }
 
@@ -94,28 +97,50 @@ fn parse_value(value: &str) -> f32 {
     }
 }
 
+fn get_chart_file(path_to_chart: &str) -> File {
+    let chart_dir: ReadDir = match std::fs::read_dir(path_to_chart) {
+        Ok(read_dir) => read_dir,
+        Err(_) => panic!("Failed to read chart directory")
+    };
+    for entry in chart_dir {
+        if let Ok(entry) = entry && let Some(file_name) = entry.file_name().to_str() {
+            if file_name.ends_with(".qua") {
+                return open_file(format!("{path_to_chart}\\{file_name}").as_str(), false);
+            }
+        }
+    }
+    panic!("Could not find chart file");
+}
+
 /// Assembles the notes collected from the chart data into the master key format
-pub fn assemble_master_key(chart_file: File) -> ParsedPayload {
-    let mut payload = parse_chart_file(chart_file);
+pub fn import_chart_from_dir(path_to_chart: &str) -> ParsedPayload {
+    let mut payload = parse_chart_file(get_chart_file(path_to_chart));
+    if let Some(audio_file_name) = &payload.rhythm_config.audio_file_name {
+        match fs::copy(format!("{path_to_chart}\\{audio_file_name}"), audio_file_name) {
+            Ok(_) => println!("Successfully imported audio file"),
+            Err(err) => println!("Failed to copy audio file at: {path_to_chart}\\{audio_file_name}\n{err}")
+        }
+    }
     let notes = &mut payload.notes;
     // Remove possible stub
     if notes[0].lanes.is_empty() {
         notes.remove(0);
     }
-    let mut key: String = String::new();
+    let mut master_key: String = String::new();
     for note in notes {
-        key += note.start_time.to_string().as_str();
-        key += ":";
+        let key_timing = snap_ms_to_beat(&payload.rhythm_config, note.start_time);
+        master_key += &format!("{}.{}", key_timing.beat, key_timing.slot);
+        master_key += ":";
         note.lanes.sort();
         for lane in &note.lanes {
-            key += lane.to_string().as_str();
-            key += ",";
+            master_key += lane.to_string().as_str();
+            master_key += ",";
         }
-        key.remove(key.len() - 1);
-        key += "|";
+        master_key.remove(master_key.len() - 1);
+        master_key += "|";
     }
-    key.remove(key.len() - 1);
+    master_key.remove(master_key.len() - 1);
     Zeroize::zeroize(&mut payload.notes);
-    payload.key = key;
+    payload.master_key = master_key;
     payload
 }

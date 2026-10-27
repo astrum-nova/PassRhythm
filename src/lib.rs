@@ -23,11 +23,10 @@ pub struct KeyTiming {
 const MINUTE_FACTOR: f32 = 60000.0;
 pub fn snap_ms_to_beat(rhythm_config: &RhythmConfig, ms: f32) -> KeyTiming {
     let mut current_timing_point = TimingPoint {
-            start_time: 0.0,
-            bpm: 0.0,
-            time_signature: Some(4.0),
-        };
-
+        start_time: 0.0,
+        bpm: 0.0,
+        time_signature: Some(4.0),
+    };
     let mut beat_offset = 0.0;
     for timing_point in &rhythm_config.timing_points {
         if timing_point.start_time < ms {

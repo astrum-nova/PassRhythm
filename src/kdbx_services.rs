@@ -35,7 +35,7 @@ pub fn update_master_key(parsed_payload: &ParsedPayload, old_key: String) -> Res
             Ok(file) => file,
             Err(err) => return Err(format!("Couldn't create temporary file: {err}")),
         };
-        let new_key = DatabaseKey::new().with_password(&parsed_payload.key);
+        let new_key = DatabaseKey::new().with_password(&parsed_payload.master_key);
         if let Err(err) = db.save(&mut tmp_file, new_key) {
             let _ = fs::remove_file(&tmp_path);
             return Err(format!("Couldn't save temporary vault: {err}"));
@@ -46,7 +46,7 @@ pub fn update_master_key(parsed_payload: &ParsedPayload, old_key: String) -> Res
         }
     }
     if !match File::open(&tmp_path) {
-        Ok(mut file) => Database::open(&mut file, DatabaseKey::new().with_password(&parsed_payload.key)).is_ok(),
+        Ok(mut file) => Database::open(&mut file, DatabaseKey::new().with_password(&parsed_payload.master_key)).is_ok(),
         Err(_) => false,
     } {
         let _ = fs::remove_file(&tmp_path);
