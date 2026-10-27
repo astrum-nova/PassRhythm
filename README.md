@@ -9,7 +9,7 @@ This project aims at creating a password manager that uses rhythm patterns as th
 2: Follow the instructions here if you don't know how to chart in quaver: <a href="CREATINGACHART.MD">CREATINGACHART.MD</a><br>
 3: Memorize it, and playtest it rigorously!<br>
 4: Launch the PassRhythm client, and select `Update master passrhythm`<br>
-5: Select your chart file, located at `C:\Program Files (x86)\Steam\steamapps\common\Quaver\Songs\[your chart folder]\[your chart].qua`<br>
+5: Select your chart file, to find the path, go in quaver > play > find your chart > right click > open folder > and copy the path to this folder<br>
 6: Perform the passrhythm 3 times in a row to make sure you can perform it, after that you will be prompted to confirm or cancel
 - ⚠ To make sure the system is secure, confirming at this stage will permanently delete your chart file, if you want to keep it back it up, or draw the chart on a piece of paper
 
