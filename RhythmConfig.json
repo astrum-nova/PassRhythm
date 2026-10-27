@@ -5,6 +5,12 @@
       "start_time": 0.0,
       "bpm": 60,
       "time_signature": 4
+    },
+    {
+      "start_time": 1000.0,
+      "bpm": 120,
+      "time_signature": 3
     }
+
   ]
 }

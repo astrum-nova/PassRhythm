@@ -17,18 +17,21 @@ pub fn open_file(file_path: &str, truncate: bool) -> File {
 
 #[derive(Debug)]
 pub struct KeyTiming {
-    beat: i32,
-    slot: i32
+    pub beat: i32,
+    pub slot: i32
 }
 const MINUTE_FACTOR: f32 = 60000.0;
-pub fn snap_ms_to_beat(rhythm_config: RhythmConfig, ms: f32) -> KeyTiming {
+pub fn snap_ms_to_beat(rhythm_config: &RhythmConfig, ms: f32) -> KeyTiming {
     let mut current_timing_point = TimingPoint {
             start_time: 0.0,
             bpm: 0.0,
             time_signature: Some(4.0),
         };
+
+    let mut beat_offset = 0.0;
     for timing_point in &rhythm_config.timing_points {
         if timing_point.start_time < ms {
+            beat_offset += (timing_point.start_time - current_timing_point.start_time) * current_timing_point.bpm / MINUTE_FACTOR;
             current_timing_point.start_time = timing_point.start_time;
             current_timing_point.bpm = timing_point.bpm;
             if timing_point.time_signature != None {
@@ -36,20 +39,23 @@ pub fn snap_ms_to_beat(rhythm_config: RhythmConfig, ms: f32) -> KeyTiming {
             }
         }
     }
-    let beat = ms * current_timing_point.bpm / MINUTE_FACTOR;
-    let floored_beat = beat.floor();
-    let raw_res = beat - floored_beat;
+    let beat = beat_offset + (ms - current_timing_point.start_time) * current_timing_point.bpm / MINUTE_FACTOR;
+    let mut floored_beat = beat.floor();
+    let snapper = beat - floored_beat;
     let mut result = 0;
-    let mut closest: f32 = f32::INFINITY;
+    let mut closest = f32::INFINITY;
     let time_signature = current_timing_point.time_signature.unwrap_or_else(|| unreachable!());
-    for i in 0..(time_signature as i32) {
-        let resolution: f32 = ((i as f32) + 1.0) / time_signature;
-        println!("{:#?}", resolution);
-        let distance = f32::abs(resolution - raw_res);
+    for i in 0..=time_signature as i32 {
+        let snap = i as f32 / time_signature;
+        let distance = f32::abs(snap - snapper);
         if distance < closest {
             closest = distance;
-            result = i + 1;
+            result = i;
         }
+    }
+    if result == time_signature as i32 {
+        result = 0;
+        floored_beat += 1.0;
     }
     KeyTiming {
         beat: floored_beat as i32,
