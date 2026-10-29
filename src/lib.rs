@@ -4,6 +4,7 @@ pub mod kdbx_services;
 pub mod record_rhythm;
 
 use std::fs::{File, OpenOptions};
+use crate::chart_parsing::Note;
 use crate::config_services::{RhythmConfig, TimingPoint};
 
 /// General file opening function
@@ -60,4 +61,22 @@ pub fn snap_ms_to_beat(rhythm_config: &RhythmConfig, ms: f32) -> KeyTiming {
         beat: floored_beat as i32,
         slot: result,
     }
+}
+
+pub fn assemble_master_key(rhythm_config: &RhythmConfig, notes: &mut Vec<Note>) -> String {
+    let mut master_key: String = String::new();
+    for note in notes {
+        let key_timing = snap_ms_to_beat(rhythm_config, note.start_time);
+        master_key += &format!("{}.{}", key_timing.beat, key_timing.slot);
+        master_key += ":";
+        note.lanes.sort();
+        for lane in &note.lanes {
+            master_key += lane.to_string().as_str();
+            master_key += ",";
+        }
+        master_key.remove(master_key.len() - 1);
+        master_key += "|";
+    }
+    master_key.remove(master_key.len() - 1);
+    master_key
 }

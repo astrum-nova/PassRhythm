@@ -3,7 +3,7 @@ use crate::config_services::{RhythmConfig, TimingPoint, write_rhythm_config};
 use std::fs::{File, ReadDir};
 use std::io::{BufRead, BufReader};
 use zeroize::Zeroize;
-use crate::{open_file, snap_ms_to_beat};
+use crate::{assemble_master_key, open_file, snap_ms_to_beat};
 
 #[derive(Debug, Zeroize)]
 /// Holds note lane, start time, and end time for a note
@@ -126,20 +126,7 @@ pub fn import_chart_from_dir(path_to_chart: &str) -> ParsedPayload {
     if notes[0].lanes.is_empty() {
         notes.remove(0);
     }
-    let mut master_key: String = String::new();
-    for note in notes {
-        let key_timing = snap_ms_to_beat(&payload.rhythm_config, note.start_time);
-        master_key += &format!("{}.{}", key_timing.beat, key_timing.slot);
-        master_key += ":";
-        note.lanes.sort();
-        for lane in &note.lanes {
-            master_key += lane.to_string().as_str();
-            master_key += ",";
-        }
-        master_key.remove(master_key.len() - 1);
-        master_key += "|";
-    }
-    master_key.remove(master_key.len() - 1);
+    let master_key = assemble_master_key(&payload.rhythm_config, notes);
     Zeroize::zeroize(&mut payload.notes);
     payload.master_key = master_key;
     payload
